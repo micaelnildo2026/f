@@ -1,7 +1,7 @@
 export interface MotorOption {
   id: string;
   name: string;
-  type: 'dc_planetary' | 'dc_worm' | 'brushless_gear' | 'stepper' | 'diy_axial_planetary';
+  type: 'dc_planetary' | 'dc_worm' | 'brushless_gear' | 'stepper' | 'diy_axial_planetary' | 'screwdriver_chain';
   voltage: number; // V
   noLoadRpm: number;
   ratedRpm: number;

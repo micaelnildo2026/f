@@ -153,6 +153,35 @@ export const MOTOR_OPTIONS: MotorOption[] = [
       'Necessita de driver BLDC sensored (VESC / ODrive mini) com leitura Hall para torque em rotação zero'
     ],
     verdict: 'SOLUÇÃO SUSTENTÁVEL AUTORAL: Combina impressão 3D em rPETG, fabricação de oficina (bobinagem + retorno em aço 1020) e componentes comprados essenciais com desempenho competitivo equivalente ao motor comercial.'
+  },
+  {
+    id: 'motor-parafusadeira-12v',
+    name: 'Motor de Parafusadeira 12V (1ª Marcha Planetária 1:36 + Corrente Bike)',
+    type: 'screwdriver_chain',
+    voltage: 12.0,
+    noLoadRpm: 350,
+    ratedRpm: 290,
+    ratedTorque: 4.6,
+    stallTorque: 14.5,
+    ratedCurrent: 12.0,
+    stallCurrent: 35.0,
+    weight: 520,
+    efficiency: 74,
+    recommended: false,
+    scoreHelpers: 9.4,
+    scoreElevation: 9.2,
+    scoreAcceleration: 9.0,
+    scoreTugOfWar: 9.5,
+    pros: [
+      'Custo imbatível (<= R$ 200 com bateria, eixos, pinhões e corrente de bicicleta)',
+      'Já vem com caixa planetária metálica de 2 velocidades (~1:36 na 1ª marcha)',
+      'Transmissão 4x4 por corrente de bicicleta 1/2" x 1/8" não patina nem rompe em tração pesada'
+    ],
+    cons: [
+      'Exige acoplamento hexagonal ou chavetado firme no eixo de saída para o pinhão 14T',
+      'Bateria original 1.5Ah exige recarga entre baterias de provas intensas'
+    ],
+    verdict: 'MELHOR CUSTO-BENEFÍCIO (<= R$ 200): Aproveita motor RS-550 + redutor planetário metálico e bateria de parafusadeira 12V com transmissão indestrutível por corrente de bicicleta.'
   }
 ];
 
@@ -527,3 +556,132 @@ export const DIY_MOTOR_FABRICATION_STEPS: FabricationStep[] = [
     qualityCheck: 'Inspeção completa do Edital: bitola 150,0 mm, engate 107,5 mm, massa 7.650 g (< 8000 g) e teste de tração.'
   }
 ];
+
+export const BUDGET_200_CORE_ITEMS_OUTLET = [
+  {
+    id: 'b-motor',
+    name: 'Motor de Parafusadeira 12V + Caixa Planetária Metálica (1ª Marcha)',
+    spec: 'Motor DC RS-550 + planetária 1:36 (~290 RPM, 4,6 N.m nom / 14,5 N.m pico)',
+    category: 'core_budget' as const,
+    unitCostBrl: 68,
+    massG: 520,
+    sourceTip: 'Parafusadeira 12V outlet/usada desmontada (aproveitando conjunto motor+caixa)'
+  },
+  {
+    id: 'b-battery',
+    name: 'Bateria 12V Li-Ion da Própria Parafusadeira (Pack 3S 1.5Ah)',
+    spec: '11,1V–12,6V · células 18650 internas com proteção + terminais de latão',
+    category: 'core_budget' as const,
+    unitCostBrl: 47,
+    massG: 240,
+    sourceTip: 'Incluída no conjunto da parafusadeira 12V ou pack 3S usado testado'
+  },
+  {
+    id: 'b-axles',
+    name: '2× Eixos de Aço (Ø 10 mm × 195 mm + Porcas Travantes & Arruelas)',
+    spec: 'Barra de aço carbono 10 mm (cortada em 2 eixos) para bitola exata de 150 mm',
+    category: 'core_budget' as const,
+    unitCostBrl: 22,
+    massG: 260,
+    sourceTip: 'Casa de ferragens / material de construção (barra 1 m + 8 porcas M10)'
+  },
+  {
+    id: 'b-sprockets',
+    name: '3× Rodas Dentadas de Bicicleta (1× Pinhão 14T + 2× Pinhões 16T)',
+    spec: 'Passo 1/2" (12,7 mm) em aço temperado: 14T no motor e 16T em cada eixo 4x4',
+    category: 'core_budget' as const,
+    unitCostBrl: 33,
+    massG: 340,
+    sourceTip: 'Bicicletaria de bairro (pinhões/catracas simples de aço ~R$ 11 cada)'
+  },
+  {
+    id: 'b-chain',
+    name: 'Corrente de Bicicleta Grossa (1/2" × 1/8")',
+    spec: '114 elos em aço carbono cortada sob medida em loop 4x4 + emenda rápida',
+    category: 'core_budget' as const,
+    unitCostBrl: 22,
+    massG: 290,
+    sourceTip: 'Bicicletaria local (corrente comum barra forte / BMX)'
+  },
+  {
+    id: 'b-wheels-3d',
+    name: '4× Rodas Ferroviárias Ø 84 mm + Tira de Câmara de Ar de Bike (Atrito)',
+    spec: 'Impressas 100% sólidas com cubo hexagonal M10 + anel de borracha reutilizada',
+    category: 'free_3d_print' as const,
+    unitCostBrl: 0,
+    massG: 480,
+    sourceTip: 'Serviço de Impressão 3D Gratuito + câmara furada gratuita de bicicletaria'
+  },
+  {
+    id: 'b-chassis-3d',
+    name: 'Chassi Modular 150 mm, Berço da Parafusadeira, Esticador & Engate 107,5 mm',
+    spec: 'Estrutura em PETG/PLA+ com alojamento fechado de lastro (sucata ferrosa limpa)',
+    category: 'free_3d_print' as const,
+    unitCostBrl: 0,
+    massG: 1420,
+    sourceTip: 'Serviço de Impressão 3D Gratuito (lastro com sucata de ferro/arruelas = R$ 0)'
+  }
+];
+
+export const BUDGET_200_RC_OPTIONS = [
+  {
+    id: 'rc-esp32',
+    label: 'Opção Econômica: ESP32 + Ponte H BTS7960 (43A) via Celular/Gamepad',
+    totalBrl: 95,
+    items: [
+      {
+        id: 'rc-esp',
+        name: 'Microcontrolador ESP32 DevKit (Wi-Fi / Bluetooth)',
+        spec: 'Gera PWM suave com rampa anti-patinagem e controle pelo navegador/gamepad',
+        category: 'remote_control_excluded' as const,
+        unitCostBrl: 35,
+        massG: 18,
+        sourceTip: 'Fora do teto de R$ 200'
+      },
+      {
+        id: 'rc-bts',
+        name: 'Driver Ponte H BTS7960 43A (Frente + Ré + Freio Motor)',
+        spec: 'Suporta pico de 35A da parafusadeira 12V sem aquecer, com reversão rápida',
+        category: 'remote_control_excluded' as const,
+        unitCostBrl: 48,
+        massG: 65,
+        sourceTip: 'Fora do teto de R$ 200'
+      },
+      {
+        id: 'rc-buck',
+        name: 'Regulador 5V (LM2596/Mini-360) + Chave Geral + Fios 14 AWG',
+        spec: 'Alimenta o ESP32 em 5V estáveis a partir da bateria 12V da parafusadeira',
+        category: 'remote_control_excluded' as const,
+        unitCostBrl: 12,
+        massG: 45,
+        sourceTip: 'Fora do teto de R$ 200'
+      }
+    ]
+  },
+  {
+    id: 'rc-flysky',
+    label: 'Opção Competição: Rádio Controle RC 2.4 GHz + ESC Brushed 60A',
+    totalBrl: 235,
+    items: [
+      {
+        id: 'rc-txrx',
+        name: 'Conjunto Transmissor + Receptor 2.4 GHz (3CH/6CH)',
+        spec: 'Alcance > 100 m sem interferência de Wi-Fi no ginásio/hall do bloco',
+        category: 'remote_control_excluded' as const,
+        unitCostBrl: 180,
+        massG: 35,
+        sourceTip: 'Fora do teto de R$ 200 (receptor na locomotiva; rádio portátil)'
+      },
+      {
+        id: 'rc-esc60',
+        name: 'ESC Brushed 60A com BEC 5V Integrado (Frente / Freio / Ré)',
+        spec: 'Plug-and-play direto no canal do acelerador do receptor RC para motor 550',
+        category: 'remote_control_excluded' as const,
+        unitCostBrl: 55,
+        massG: 42,
+        sourceTip: 'Fora do teto de R$ 200'
+      }
+    ]
+  }
+];
+

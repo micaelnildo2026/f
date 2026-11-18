@@ -20,7 +20,8 @@ import {
   ExternalLink,
   Info,
   FileDown,
-  Leaf
+  Leaf,
+  Wallet
 } from 'lucide-react';
 import { Compass } from 'lucide-react';
 import { ThreeLocomotiveViewer } from './components/ThreeLocomotiveViewer';
@@ -28,6 +29,7 @@ import { TransmissionSystem } from './components/TransmissionSystem';
 import { KinematicDrawing } from './components/KinematicDrawing';
 import { MotorSelector } from './components/MotorSelector';
 import { SustainableLocomotiveBuilder } from './components/SustainableLocomotiveBuilder';
+import { BudgetLocomotiveBuilder } from './components/BudgetLocomotiveBuilder';
 import { CompetitionSimulators } from './components/CompetitionSimulators';
 import { RegulationChecklist } from './components/RegulationChecklist';
 import { Print3DSpecs } from './components/Print3DSpecs';
@@ -39,7 +41,7 @@ import { TransmissionConfig, LocomotiveSpecs, MotorOption } from './types/locomo
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
-    'viewer' | 'drawing' | 'transmission' | 'motor' | 'sustainable' | 'simulator' | 'regulation' | 'print3d' | 'report' | 'gallery'
+    'viewer' | 'drawing' | 'transmission' | 'motor' | 'sustainable' | 'budget200' | 'simulator' | 'regulation' | 'print3d' | 'report' | 'gallery'
   >('drawing');
 
   const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
@@ -48,11 +50,14 @@ export default function App() {
   const [specs, setSpecs] = useState<LocomotiveSpecs>(DEFAULT_LOCOMOTIVE_SPECS);
   const [selectedMotorId, setSelectedMotorId] = useState<string>('motor-775-planetary');
   const [customSustainableMotor, setCustomSustainableMotor] = useState<MotorOption | null>(null);
+  const [customBudgetMotor, setCustomBudgetMotor] = useState<MotorOption | null>(null);
 
   const baseMotor = MOTOR_OPTIONS.find((m) => m.id === selectedMotorId) || MOTOR_OPTIONS[0];
   const selectedMotor =
     selectedMotorId === 'motor-diy-sustainable-afpm' && customSustainableMotor
       ? customSustainableMotor
+      : selectedMotorId === 'motor-parafusadeira-12v' && customBudgetMotor
+      ? customBudgetMotor
       : baseMotor;
 
   const handleSelectMotor = (motorId: string) => {
@@ -60,12 +65,19 @@ export default function App() {
     const motor =
       motorId === 'motor-diy-sustainable-afpm' && customSustainableMotor
         ? customSustainableMotor
+        : motorId === 'motor-parafusadeira-12v' && customBudgetMotor
+        ? customBudgetMotor
         : MOTOR_OPTIONS.find((m) => m.id === motorId);
     if (motor) {
       setTransmission((prev) => ({
         ...prev,
         motorRpm: motor.ratedRpm,
-        internalGearboxRatio: motorId === 'motor-diy-sustainable-afpm' ? 5.0 : 19.2,
+        internalGearboxRatio:
+          motorId === 'motor-diy-sustainable-afpm'
+            ? 5.0
+            : motorId === 'motor-parafusadeira-12v'
+            ? 36.0
+            : 19.2,
       }));
     }
   };
@@ -186,7 +198,19 @@ export default function App() {
               }`}
             >
               <Leaf className="w-4 h-4" />
-              <span>Solução Sustentável & Motor Próprio</span>
+              <span>Solução Sustentável &amp; Motor Próprio</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('budget200')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer ${
+                activeTab === 'budget200'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-amber-400/90 hover:text-amber-300 hover:bg-slate-900'
+              }`}
+            >
+              <Wallet className="w-4 h-4" />
+              <span>Projeto ≤ R$ 200 (Parafusadeira)</span>
             </button>
 
             <button
@@ -385,6 +409,25 @@ export default function App() {
                 motorRpm: customMotorOutput.gearboxOutputRpm,
                 internalGearboxRatio: customMotorInput.planetaryRatio,
               }));
+            }}
+          />
+        )}
+
+        {activeTab === 'budget200' && (
+          <BudgetLocomotiveBuilder
+            isBudget200Active={selectedMotorId === 'motor-parafusadeira-12v'}
+            specs={specs}
+            onActivateBudget200={({ specs: nextSpecs, transmission: nextTrans, ratedRpm, ratedTorqueNm, stallTorqueNm }) => {
+              const base = MOTOR_OPTIONS.find((m) => m.id === 'motor-parafusadeira-12v') || MOTOR_OPTIONS[0];
+              setCustomBudgetMotor({
+                ...base,
+                ratedRpm,
+                ratedTorque: ratedTorqueNm,
+                stallTorque: stallTorqueNm,
+              });
+              setSelectedMotorId('motor-parafusadeira-12v');
+              setSpecs(nextSpecs);
+              setTransmission(nextTrans);
             }}
           />
         )}

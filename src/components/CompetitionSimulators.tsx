@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Target, TrendingUp, Gauge, Swords, CheckCircle2, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
 import { LocomotiveSpecs, TransmissionConfig, MotorOption } from '../types/locomotive';
+import { TrialAnimationStage } from './TrialAnimationStage';
 
 interface Props {
   specs: LocomotiveSpecs;
@@ -140,7 +141,33 @@ export const CompetitionSimulators: React.FC<Props> = ({ specs, transmission, se
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-6 space-y-6">
+        <TrialAnimationStage
+          activeProof={activeProof}
+          locoMassKg={locoMassKg}
+          maxAdhesionForceN={maxAdhesionForceN}
+          helpersLoadKg={helpersLoadKg}
+          helpersPeakForceN={helpersPeakForceN}
+          helpersSpeedMs={helpersSpeedMs}
+          helpersTime2m={helpersTime2m}
+          helpersPassed={helpersPassed}
+          elevationAngleDeg={elevationAngleDeg}
+          gravityResistN={gravityResistN}
+          rampAdhesionLimitN={rampAdhesionLimitN}
+          rampTotalForceN={rampTotalForceN}
+          rampSpeedMs={rampSpeedMs}
+          rampTime2m={rampTime2m}
+          rampPassed={rampPassed}
+          controlledAccMs2={controlledAccMs2}
+          topSpeedMs={topSpeedMs}
+          totalAccTime2500Mm={totalAccTime2500Mm}
+          rivalWeightKg={rivalWeightKg}
+          rivalTractionType={rivalTractionType}
+          rivalMaxAdhesionN={rivalMaxAdhesionN}
+          hitchSafetyFactor={hitchSafetyFactor}
+          tugOfWarWin={tugOfWarWin}
+        />
+
         {/* --- PROVA 4.2 HELPERS --- */}
         {activeProof === 'helpers' && (
           <div className="space-y-6">
