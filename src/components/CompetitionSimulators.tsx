@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Target, TrendingUp, Gauge, Swords, CheckCircle2, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
-import { LocomotiveSpecs, TransmissionConfig } from '../types/locomotive';
+import { LocomotiveSpecs, TransmissionConfig, MotorOption } from '../types/locomotive';
 
 interface Props {
   specs: LocomotiveSpecs;
   transmission: TransmissionConfig;
+  selectedMotor?: MotorOption;
 }
 
-export const CompetitionSimulators: React.FC<Props> = ({ specs, transmission }) => {
+export const CompetitionSimulators: React.FC<Props> = ({ specs, transmission, selectedMotor }) => {
   const [activeProof, setActiveProof] = useState<'helpers' | 'elevation' | 'acceleration' | 'tug_of_war'>('helpers');
 
   // Helpers Simulator States
@@ -27,7 +28,7 @@ export const CompetitionSimulators: React.FC<Props> = ({ specs, transmission }) 
   const wheelRadiusM = (transmission.wheelDiameterMm / 2) / 1000; // 0.0325 m
   const gearRatio = transmission.drivenGearTeeth / transmission.motorPinionTeeth; // 3.0
   const totalRatio = transmission.internalGearboxRatio * gearRatio; // 57.6
-  const motorRatedTorque = 4.8; // N.m no redutor planetário
+  const motorRatedTorque = selectedMotor?.ratedTorque ?? 4.8; // N.m no redutor planetário
   const maxAxleTorque = motorRatedTorque * gearRatio * 0.90; // ~13.0 N.m
   const maxTractiveForce = maxAxleTorque / wheelRadiusM; // ~399 N (motor-limited)
 

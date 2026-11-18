@@ -28,7 +28,7 @@ export const MotorSelector: React.FC<Props> = ({ selectedMotorId, onSelectMotor 
               </span>
             </h2>
             <p className="text-xs text-slate-400">
-              Avaliação de 4 tecnologias de motorização frente às 4 provas oficiais do regulamento Cavalos de Ferro 2026
+              Avaliação de 5 tecnologias de motorização (incluindo Motor Próprio Sustentável) frente às 4 provas oficiais
             </p>
           </div>
         </div>
@@ -58,7 +58,7 @@ export const MotorSelector: React.FC<Props> = ({ selectedMotorId, onSelectMotor 
         {activeTab === 'comparison' && (
           <div className="space-y-6">
             {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {MOTOR_OPTIONS.map((motor) => {
                 const isSelected = motor.id === selectedMotorId;
                 return (

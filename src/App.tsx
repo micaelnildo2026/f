@@ -19,13 +19,15 @@ import {
   ChevronRight,
   ExternalLink,
   Info,
-  FileDown
+  FileDown,
+  Leaf
 } from 'lucide-react';
 import { Compass } from 'lucide-react';
 import { ThreeLocomotiveViewer } from './components/ThreeLocomotiveViewer';
 import { TransmissionSystem } from './components/TransmissionSystem';
 import { KinematicDrawing } from './components/KinematicDrawing';
 import { MotorSelector } from './components/MotorSelector';
+import { SustainableLocomotiveBuilder } from './components/SustainableLocomotiveBuilder';
 import { CompetitionSimulators } from './components/CompetitionSimulators';
 import { RegulationChecklist } from './components/RegulationChecklist';
 import { Print3DSpecs } from './components/Print3DSpecs';
@@ -33,11 +35,11 @@ import { TechnicalReport } from './components/TechnicalReport';
 import { CadReferenceGallery } from './components/CadReferenceGallery';
 import { FullProjectPdfExport } from './components/FullProjectPdfExport';
 import { DEFAULT_TRANSMISSION, DEFAULT_LOCOMOTIVE_SPECS, MOTOR_OPTIONS } from './data/locomotiveData';
-import { TransmissionConfig, LocomotiveSpecs } from './types/locomotive';
+import { TransmissionConfig, LocomotiveSpecs, MotorOption } from './types/locomotive';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
-    'viewer' | 'drawing' | 'transmission' | 'motor' | 'simulator' | 'regulation' | 'print3d' | 'report' | 'gallery'
+    'viewer' | 'drawing' | 'transmission' | 'motor' | 'sustainable' | 'simulator' | 'regulation' | 'print3d' | 'report' | 'gallery'
   >('drawing');
 
   const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
@@ -45,16 +47,25 @@ export default function App() {
   const [transmission, setTransmission] = useState<TransmissionConfig>(DEFAULT_TRANSMISSION);
   const [specs, setSpecs] = useState<LocomotiveSpecs>(DEFAULT_LOCOMOTIVE_SPECS);
   const [selectedMotorId, setSelectedMotorId] = useState<string>('motor-775-planetary');
+  const [customSustainableMotor, setCustomSustainableMotor] = useState<MotorOption | null>(null);
 
-  const selectedMotor = MOTOR_OPTIONS.find((m) => m.id === selectedMotorId) || MOTOR_OPTIONS[0];
+  const baseMotor = MOTOR_OPTIONS.find((m) => m.id === selectedMotorId) || MOTOR_OPTIONS[0];
+  const selectedMotor =
+    selectedMotorId === 'motor-diy-sustainable-afpm' && customSustainableMotor
+      ? customSustainableMotor
+      : baseMotor;
 
   const handleSelectMotor = (motorId: string) => {
     setSelectedMotorId(motorId);
-    const motor = MOTOR_OPTIONS.find((m) => m.id === motorId);
+    const motor =
+      motorId === 'motor-diy-sustainable-afpm' && customSustainableMotor
+        ? customSustainableMotor
+        : MOTOR_OPTIONS.find((m) => m.id === motorId);
     if (motor) {
       setTransmission((prev) => ({
         ...prev,
-        motorRpm: motor.ratedRpm
+        motorRpm: motor.ratedRpm,
+        internalGearboxRatio: motorId === 'motor-diy-sustainable-afpm' ? 5.0 : 19.2,
       }));
     }
   };
@@ -156,14 +167,26 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('motor')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition-all shrink-0 ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer ${
                 activeTab === 'motor'
                   ? 'bg-cyan-500 text-slate-950 font-bold shadow-lg shadow-cyan-500/20'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
               <Zap className="w-4 h-4" />
-              <span>Escolha do Motor (775 Planetário)</span>
+              <span>Escolha do Motor</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('sustainable')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer ${
+                activeTab === 'sustainable'
+                  ? 'bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20'
+                  : 'text-emerald-400/90 hover:text-emerald-300 hover:bg-slate-900'
+              }`}
+            >
+              <Leaf className="w-4 h-4" />
+              <span>Solução Sustentável & Motor Próprio</span>
             </button>
 
             <button
@@ -334,8 +357,44 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'sustainable' && (
+          <SustainableLocomotiveBuilder
+            isSustainableMotorActive={selectedMotorId === 'motor-diy-sustainable-afpm'}
+            transmission={transmission}
+            specs={specs}
+            onActivateSustainableSolution={({ customMotorOutput, customMotorInput, sustainableSpecs }) => {
+              const diyBase = MOTOR_OPTIONS.find((m) => m.id === 'motor-diy-sustainable-afpm') || MOTOR_OPTIONS[0];
+              const updatedMotor: MotorOption = {
+                ...diyBase,
+                name: `Motor Próprio Sustentável AFPM ${customMotorInput.statorCoils}N${customMotorInput.rotorPoles}P + Planetária 3D ${customMotorInput.planetaryRatio.toFixed(1)}:1`,
+                voltage: customMotorInput.supplyVoltageV,
+                noLoadRpm: Math.round(customMotorOutput.rawNoLoadRpm / customMotorInput.planetaryRatio),
+                ratedRpm: customMotorOutput.gearboxOutputRpm,
+                ratedTorque: customMotorOutput.gearboxRatedTorqueNm,
+                stallTorque: customMotorOutput.gearboxStallTorqueNm,
+                ratedCurrent: customMotorInput.continuousCurrentA,
+                stallCurrent: customMotorInput.escPeakCurrentLimitA,
+                weight: customMotorOutput.estimatedMotorMassG,
+                efficiency: customMotorOutput.efficiencyPercent,
+              };
+              setCustomSustainableMotor(updatedMotor);
+              setSelectedMotorId('motor-diy-sustainable-afpm');
+              setSpecs(sustainableSpecs);
+              setTransmission((prev) => ({
+                ...prev,
+                motorRpm: customMotorOutput.gearboxOutputRpm,
+                internalGearboxRatio: customMotorInput.planetaryRatio,
+              }));
+            }}
+          />
+        )}
+
         {activeTab === 'simulator' && (
-          <CompetitionSimulators specs={specs} transmission={transmission} />
+          <CompetitionSimulators
+            specs={specs}
+            transmission={transmission}
+            selectedMotor={selectedMotor}
+          />
         )}
 
         {activeTab === 'regulation' && (

@@ -1,4 +1,10 @@
-import { MotorOption, TransmissionConfig, LocomotiveSpecs } from '../types/locomotive';
+import {
+  MotorOption,
+  TransmissionConfig,
+  LocomotiveSpecs,
+  SustainableBomItem,
+  FabricationStep,
+} from '../types/locomotive';
 
 export const MOTOR_OPTIONS: MotorOption[] = [
   {
@@ -117,6 +123,36 @@ export const MOTOR_OPTIONS: MotorOption[] = [
       'Muito pesado (1.05 kg só o motor) e consumo estático contínuo elevado'
     ],
     verdict: 'Inadequado para tração pesada competitiva devido à perda catastrófica de passo sob sobrecarga.'
+  },
+  {
+    id: 'motor-diy-sustainable-afpm',
+    name: 'Motor Próprio Sustentável AFPM 12N14P + Planetária 3D (Fabricação Própria)',
+    type: 'diy_axial_planetary',
+    voltage: 12.8, // Bateria LiFePO4 4S livre de cobalto (2000+ ciclos)
+    noLoadRpm: 340,
+    ratedRpm: 285,
+    ratedTorque: 4.82, // N.m após estágio planetário impresso 5:1
+    stallTorque: 13.55, // N.m limitado pelo ESC sensored a 45A
+    ratedCurrent: 16.0,
+    stallCurrent: 45.0,
+    weight: 710,
+    efficiency: 86,
+    recommended: true,
+    scoreHelpers: 9.7,
+    scoreElevation: 9.5,
+    scoreAcceleration: 9.2,
+    scoreTugOfWar: 9.6,
+    pros: [
+      '100% reparável e modular: bobinas, ímãs N52 e engrenagens planetárias são substituíveis sem descarte',
+      'Zero aço silício laminado complexo: estator sem núcleo ferroso impresso em rPETG reciclado com discos de aço 1020 de sucata',
+      'Sensores Hall integrados no estator eliminam cogging na partida com carga de 20 kg (Helpers)',
+      'Opera com bateria LiFePO4 4S livre de cobalto (6,7x mais ciclos de vida útil que LiPo)'
+    ],
+    cons: [
+      'Exige ~6 horas de bobinagem manual com gabarito impresso em 3D e alinhamento cuidadoso de entreferro',
+      'Necessita de driver BLDC sensored (VESC / ODrive mini) com leitura Hall para torque em rotação zero'
+    ],
+    verdict: 'SOLUÇÃO SUSTENTÁVEL AUTORAL: Combina impressão 3D em rPETG, fabricação de oficina (bobinagem + retorno em aço 1020) e componentes comprados essenciais com desempenho competitivo equivalente ao motor comercial.'
   }
 ];
 
@@ -260,5 +296,234 @@ export const USER_CAD_SCREENSHOTS = [
     title: 'Vista Frontal com Rodeiro 150mm',
     path: '/assets/aistudio/Screenshot_20261106-155924_1b876034.png',
     desc: 'Bitola de 150 mm entre os centros das rodas com flange ferroviário nos trilhos.'
+  }
+];
+
+export const SUSTAINABLE_LOCOMOTIVE_SPECS: LocomotiveSpecs = {
+  ...DEFAULT_LOCOMOTIVE_SPECS,
+  motorGearboxWeightG: 790, // Motor próprio AFPM (710g) + engrenagens externas M1.0
+  batteryWeightG: 540, // LiFePO4 4S 12.8V 5000mAh sem cobalto
+  ballastWeightG: 2970, // Lastro ecológico de sucata ferrosa/parafusos reciclados (ZERO chumbo tóxico)
+  totalWeightGrams: 7650, // Mantém massa ótima de aderência abaixo dos 8000 g
+};
+
+export const SUSTAINABLE_BOM_ITEMS: SustainableBomItem[] = [
+  // IMPRESSÃO 3D (rPETG Reciclado / PA12-CF / PLA+)
+  {
+    id: 'bom-stator-carrier',
+    subsystem: 'motor',
+    name: 'Estator Porta-Bobinas 12N + Gabarito de Bobinagem',
+    method: 'print3d',
+    materialOrSpec: 'rPETG Reciclado (100% sólido, Tg 80°C)',
+    sustainabilityRole: 'Elimina chapas estampadas de aço silício; permite desenrolar e reciclar o cobre ao fim da vida útil.',
+    massG: 85,
+    estimatedCostBrl: 14,
+    tooling: 'Impressora 3D FDM (bico 0.4 mm, camada 0.16 mm)',
+  },
+  {
+    id: 'bom-planetary-stage',
+    subsystem: 'motor',
+    name: 'Redutor Planetário 5:1 Integrado (Sol 15T / Planetas 22T / Coroa 60T M1.5)',
+    method: 'print3d',
+    materialOrSpec: 'Nylon PA12-CF / rPETG lubrificado com graxa PTFE',
+    sustainabilityRole: 'Substitui caixa planetária metálica selada importada por estágio modular reparável peça a peça.',
+    massG: 125,
+    estimatedCostBrl: 24,
+    tooling: 'Impressora 3D FDM (infill 100% concêntrico, camada 0.12 mm)',
+  },
+  {
+    id: 'bom-chassis-shell',
+    subsystem: 'chassis',
+    name: 'Chassi Modular 150 mm + Carenagem Sem Cola (Encaixes Parafusados)',
+    method: 'print3d',
+    materialOrSpec: 'rPETG reciclado (chassi) + PLA biodegradável (carenagem)',
+    sustainabilityRole: 'Montagem 100% reversível com insertos de latão; peças avariadas são reimpressas isoladamente.',
+    massG: 2400,
+    estimatedCostBrl: 165,
+    tooling: 'Impressora 3D FDM + Ferro de solda 220°C (insertos)',
+  },
+  {
+    id: 'bom-gears-wheels',
+    subsystem: 'transmission',
+    name: 'Par M1.0 (15T/45T), Polias GT2 30T e Núcleo das 4 Rodas (150 mm)',
+    method: 'print3d',
+    materialOrSpec: 'PA12 / rPETG alta resistência + anel O-ring de PU reutilizável',
+    sustainabilityRole: 'Desmontagem rápida de rodeiros e engrenagens sem colagem permanente.',
+    massG: 260,
+    estimatedCostBrl: 38,
+    tooling: 'Impressora 3D FDM (0.12 mm de precisão dental)',
+  },
+
+  // FABRICAÇÃO PRÓPRIA / REAPROVEITAMENTO EM OFICINA
+  {
+    id: 'bom-winding-assembly',
+    subsystem: 'motor',
+    name: 'Bobinagem Trifásica Estrela (12 bobinas × 20 espiras) + Resina Biobase',
+    method: 'fabrication',
+    materialOrSpec: 'Bobinagem manual em gabarito + amarração e verniz isolante',
+    sustainabilityRole: 'Construção autoral do estator sem perdas por histerese no núcleo (ironless), reduzindo aquecimento.',
+    massG: 118,
+    estimatedCostBrl: 18,
+    tooling: 'Gabarito impresso 3D, multímetro, ferro de solda e estufa 50°C',
+  },
+  {
+    id: 'bom-backiron-discs',
+    subsystem: 'motor',
+    name: '2 Discos de Retorno Magnético do Rotor (14 Polos)',
+    method: 'fabrication',
+    materialOrSpec: 'Chapa de aço carbono SAE 1020 (3 mm) reaproveitada de retalho',
+    sustainabilityRole: 'Reúso de sobras metálicas industriais cortadas e faceadas em oficina universitária.',
+    massG: 260,
+    estimatedCostBrl: 15,
+    tooling: 'Esmerilhadeira / serra copo + furadeira de bancada',
+  },
+  {
+    id: 'bom-reclaimed-shafts',
+    subsystem: 'transmission',
+    name: 'Eixos Temperados Ø8 mm (Motor + 2 Eixos das Rodas 150 mm)',
+    method: 'fabrication',
+    materialOrSpec: 'Varões lineares Ø8 mm reaproveitados de impressoras 2D/3D sucateadas',
+    sustainabilityRole: 'Reaproveitamento direto de aço retificado de lixo eletrônico (e-waste) com tolerância h6.',
+    massG: 290,
+    estimatedCostBrl: 0,
+    tooling: 'Dremel / lima para chanfro D-cut e canal de chaveta',
+  },
+  {
+    id: 'bom-eco-ballast',
+    subsystem: 'chassis',
+    name: 'Lastro Ecológico de Aderência (Zero Chumbo Tóxico)',
+    method: 'fabrication',
+    materialOrSpec: '2.970 g de sucata ferrosa limpa (arruelas/porcas velhas encapsuladas)',
+    sustainabilityRole: 'Elimina 100% do chumbo metálico tóxico (2,9 kg) tradicionalmente usado em modelismo.',
+    massG: 2970,
+    estimatedCostBrl: 12,
+    tooling: 'Balança digital e estojo modular impresso no fundo do chassi',
+  },
+
+  // COMPRA ESTRATÉGICA (COMPONENTES ESSENCIAIS NÃO FABRICÁVEIS)
+  {
+    id: 'bom-enameled-copper',
+    subsystem: 'motor',
+    name: 'Fio de Cobre Esmaltado Classe F (AWG 19 / Ø0,95 mm — 15 m)',
+    method: 'purchase',
+    materialOrSpec: 'Cobre eletrolítico com duplo esmalte poliéster-imida (155°C)',
+    sustainabilityRole: 'Cobre 100% reciclável ao final do projeto; alta seção reduz perdas Joule (I²R).',
+    massG: 95,
+    estimatedCostBrl: 36,
+    tooling: 'Compra em bobina fracionada (ou reaproveitamento de transformador)',
+  },
+  {
+    id: 'bom-n52-magnets',
+    subsystem: 'motor',
+    name: '28 Ímãs de Neodímio N52 (15×10×4 mm para 14 polos dupla face)',
+    method: 'purchase',
+    materialOrSpec: 'NdFeB N52 revestidos com Ni-Cu-Ni (fixados em alojamento sem cola definitiva)',
+    sustainabilityRole: 'Alojamento mecânico com anel trava permite extrair e reutilizar os ímãs de terras raras.',
+    massG: 92,
+    estimatedCostBrl: 112,
+    tooling: 'Gabarito polarizador impresso (N-S-N-S)',
+  },
+  {
+    id: 'bom-bearings-belt',
+    subsystem: 'transmission',
+    name: '6 Rolamentos 608ZZ + Correia Fechada GT2-380 (9 mm largura)',
+    method: 'purchase',
+    materialOrSpec: 'Aço cromo 608ZZ (2 no motor + 4 nos mancais) + borracha/fibra de vidro GT2',
+    sustainabilityRole: 'Componentes padronizados de longa vida útil e baixo atrito mecânico.',
+    massG: 145,
+    estimatedCostBrl: 68,
+    tooling: 'Compra padrão industrial',
+  },
+  {
+    id: 'bom-lifepo4-vesc',
+    subsystem: 'electronics',
+    name: 'Bateria LiFePO4 4S (12,8V 5Ah) + ESC Sensored BLDC (45A) + 3 Sensores Hall',
+    method: 'purchase',
+    materialOrSpec: 'Células LiFePO4 (sem cobalto, 2000+ ciclos) + driver VESC/BLDC Hall + SS41F',
+    sustainabilityRole: 'Química livre de cobalto e risco térmico; dura 6,7× mais que LiPo e permite freio regenerativo.',
+    massG: 670,
+    estimatedCostBrl: 380,
+    tooling: 'Conectores XT60 reaproveitáveis e solda sem chumbo (Sn-Ag-Cu)',
+  },
+];
+
+export const DIY_MOTOR_FABRICATION_STEPS: FabricationStep[] = [
+  {
+    stepNumber: 1,
+    title: 'Impressão 3D do Estator, Gabarito de Bobinagem e Redutor Planetário',
+    methodBadge: 'Impressão 3D (rPETG / PA12-CF)',
+    durationEst: '4h 30min',
+    summary: 'Imprima o suporte anelar de 12 alojamentos em rPETG reciclado, o carretel gabarito bipartido e as engrenagens planetárias M1.5 (Sol 15T, 3 Planetas 22T, Coroa 60T).',
+    details: [
+      'Fatie o estator com 100% de preenchimento e altura de camada 0.16 mm para garantir rigidez dimensional no entreferro de 6 mm.',
+      'Imprima os alojamentos para os 3 sensores Hall (SS41F) defasados em 120° elétricos diretamente na borda externa do estator.',
+      'Faça o pós-processamento dos dentes da planetária com lixa fina e aplique pasta de PTFE seca para amaciamento.'
+    ],
+    qualityCheck: 'Conferir planicidade do estator (< 0,2 mm de empenamento) e giro livre dos 3 satélites antes da montagem.'
+  },
+  {
+    stepNumber: 2,
+    title: 'Bobinagem das 12 Bobinas no Gabarito Impresso',
+    methodBadge: 'Fabricação Própria (Enrolamento)',
+    durationEst: '2h 00min',
+    summary: 'Enrole 12 bobinas trapezoidais idênticas com fio de cobre esmaltado Ø0,95 mm usando o gabarito impresso montado na parafusadeira em baixa rotação.',
+    details: [
+      'Aplique fita Kapton ou papel Nomex reciclado no núcleo do gabarito e conte exatamente o número de espiras configurado (ex: 20 espiras/bobina).',
+      'Encaixe as 12 bobinas no estator impresso seguindo a sequência trifásica 12N14P: A-a-B-b-C-c-A-a-B-b-C-c.',
+      'Solde em ligação Estrela (Y) com solda lead-free (Sn-Ag-Cu) e isole as emendas com tubo termo-retrátil.'
+    ],
+    qualityCheck: 'Medir resistência entre fases (A-B, B-C, C-A) com multímetro: diferença máxima aceita < 3% e isolamento infinito para os discos.'
+  },
+  {
+    stepNumber: 3,
+    title: 'Usinagem dos 2 Discos de Retorno Magnético & Eixo Ø8 mm',
+    methodBadge: 'Oficina & Reaproveitamento',
+    durationEst: '1h 30min',
+    summary: 'Corte dois discos circulares em retalho de aço carbono SAE 1020 (espessura 3 mm) para fechar o fluxo magnético dos ímãs N52 e prepare o eixo Ø8 mm de sucata.',
+    details: [
+      'Fure o centro do disco traseiro e dianteiro com serra copo/broca escalonada e adicione 4 furos de ventilação inclinados.',
+      'Reaproveite um varão retificado Ø8 mm de impressora antiga, faça o chanfro plano (D-cut) para travamento da engrenagem solar 15T.',
+      'Prenda os anéis espaçadores impressos em 3D que posicionam os 14 ímãs N52 sem uso de cola permanente (desmontável).'
+    ],
+    qualityCheck: 'Verificar batimento axial dos discos no eixo sobre dois mancais 608ZZ (< 0,15 mm).'
+  },
+  {
+    stepNumber: 4,
+    title: 'Inserção Polarizada dos 28 Ímãs N52 & Montagem do Sanduíche Axial',
+    methodBadge: 'Compra Estratégica + Gabarito 3D',
+    durationEst: '45min',
+    summary: 'Instale 14 ímãs N52 em cada disco alternando polos (N-S-N-S) e garantindo atração face a face entre os dois rotores através do estator.',
+    details: [
+      'Utilize o gabarito polarizador impresso para nunca inverter um polo; pinte a face Norte de cada ímã antes de alojar.',
+      'Monte os dois rotores no eixo Ø8 mm usando porcas trava de nylon M8 que ajustam o entreferro para 0,8 mm de cada lado do estator.',
+      'Fixe os dois mancais com rolamentos 608ZZ na carcaça externa impressa em rPETG.'
+    ],
+    qualityCheck: 'Girar o eixo manualmente: deve apresentar rotação suave sem raspagem mecânica no estator e zero cogging excessivo.'
+  },
+  {
+    stepNumber: 5,
+    title: 'Acoplamento do Redutor Planetário 5:1 & Teste em Bancada com ESC Sensored',
+    methodBadge: 'Integração Eletromecânica',
+    durationEst: '1h 00min',
+    summary: 'Feche o estágio planetário impresso na frente do motor axial e calibre os 3 sensores Hall no ESC (VESC/BLDC) alimentado pela bateria LiFePO4 4S.',
+    details: [
+      'Conecte as 3 fases (U, V, W) e o cabo de 5 vias dos sensores Hall ao controlador BLDC sensored de 45A.',
+      'Execute a rotina automática de detecção de fluxo e sensores Hall para obter partida suave com torque pleno a 0 RPM.',
+      'Acople o pinhão M1.0 15T na saída do porta-planetárias e verifique o alinhamento com a coroa 45T do eixo dianteiro.'
+    ],
+    qualityCheck: 'Medir corrente a vazio (< 1,8 A a 12,8 V) e testar inversão rápida de sentido para a prova de Cabo de Guerra.'
+  },
+  {
+    stepNumber: 6,
+    title: 'Montagem Final na Locomotiva Circular (Lastro Ferroso & Bitola 150 mm)',
+    methodBadge: 'Integração Sustentável Final',
+    durationEst: '1h 15min',
+    summary: 'Instale o conjunto motorizado no chassi rPETG, aplique a correia GT2 nos 2 rodeiros de 150 mm e adicione o lastro de sucata ferrosa até 7.650 g.',
+    details: [
+      'Posicione o estojo de sucata ferrosa limpa (2.970 g) no fundo central do chassi para abaixar o centro de gravidade sem chumbo tóxico.',
+      'Instale a bateria LiFePO4 4S 12,8V no compartimento superior com chave geral industrial e conector XT60.',
+      'Parafuse a carenagem modular com parafusos M3 nos insertos de latão, garantindo zero peças soltas (Regra 3.g).'
+    ],
+    qualityCheck: 'Inspeção completa do Edital: bitola 150,0 mm, engate 107,5 mm, massa 7.650 g (< 8000 g) e teste de tração.'
   }
 ];

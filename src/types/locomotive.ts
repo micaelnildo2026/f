@@ -1,7 +1,7 @@
 export interface MotorOption {
   id: string;
   name: string;
-  type: 'dc_planetary' | 'dc_worm' | 'brushless_gear' | 'stepper';
+  type: 'dc_planetary' | 'dc_worm' | 'brushless_gear' | 'stepper' | 'diy_axial_planetary';
   voltage: number; // V
   noLoadRpm: number;
   ratedRpm: number;
@@ -19,6 +19,30 @@ export interface MotorOption {
   pros: string[];
   cons: string[];
   verdict: string;
+}
+
+export type ProductionMethod = 'print3d' | 'fabrication' | 'purchase';
+
+export interface SustainableBomItem {
+  id: string;
+  subsystem: 'motor' | 'transmission' | 'chassis' | 'electronics';
+  name: string;
+  method: ProductionMethod;
+  materialOrSpec: string;
+  sustainabilityRole: string;
+  massG: number;
+  estimatedCostBrl: number;
+  tooling: string;
+}
+
+export interface FabricationStep {
+  stepNumber: number;
+  title: string;
+  methodBadge: string;
+  durationEst: string;
+  summary: string;
+  details: string[];
+  qualityCheck: string;
 }
 
 export interface TransmissionConfig {
