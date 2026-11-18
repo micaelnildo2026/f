@@ -245,7 +245,7 @@ export const CompetitionSimulators: React.FC<Props> = ({ specs, transmission, se
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
-                    <span className="text-[11px] text-slate-400">Força de Empuxo:</span>
+                    <span className="text-[11px] text-slate-400">Força de Tração (Vagão):</span>
                     <div className="text-lg font-bold font-mono text-cyan-400 mt-0.5">
                       {helpersPeakForceN.toFixed(1)} N
                     </div>

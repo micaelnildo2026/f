@@ -9,11 +9,16 @@ import {
   Wrench,
   RotateCcw,
   ShieldCheck,
+  BatteryCharging,
+  Zap,
+  Trophy,
+  ClipboardCheck,
 } from 'lucide-react';
 import {
   BudgetLocomotiveItem,
   calculateBudgetSummary,
   calculateScrewdriverChainDrivetrain,
+  evaluateBudgetFourTrials,
 } from '../utils/budgetLocomotivePhysics';
 import {
   BUDGET_200_CORE_ITEMS_OUTLET,
@@ -62,6 +67,8 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
   const screwdriverRatedTorqueNm = screwdriverGear === 'gear1' ? 4.6 : 1.7;
   const screwdriverStallTorqueNm = screwdriverGear === 'gear1' ? 14.5 : 5.4;
 
+  const locoMassKg = Number((budgetAudit.totalEstimatedMassG / 1000).toFixed(2));
+
   const chainPhysics = useMemo(
     () =>
       calculateScrewdriverChainDrivetrain({
@@ -71,10 +78,31 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
         motorSprocketTeeth,
         axleSprocketTeeth,
         wheelDiameterMm,
-        locoMassKg: 7.65,
+        locoMassKg,
         frictionCoeff: 0.68,
       }),
-    [screwdriverRpm, screwdriverRatedTorqueNm, screwdriverStallTorqueNm, motorSprocketTeeth, axleSprocketTeeth, wheelDiameterMm]
+    [
+      screwdriverRpm,
+      screwdriverRatedTorqueNm,
+      screwdriverStallTorqueNm,
+      motorSprocketTeeth,
+      axleSprocketTeeth,
+      wheelDiameterMm,
+      locoMassKg,
+    ]
+  );
+
+  const fourTrialsEvaluation = useMemo(
+    () =>
+      evaluateBudgetFourTrials({
+        drivetrain: chainPhysics,
+        locoMassKg,
+        frictionCoeff: 0.68,
+        batteryMaxContinuousA: 20,
+        totalEstimatedMassG: budgetAudit.totalEstimatedMassG,
+        wheelDiameterMm,
+      }),
+    [chainPhysics, locoMassKg, budgetAudit.totalEstimatedMassG, wheelDiameterMm]
   );
 
   const handlePriceChange = (id: string, value: number) => {
@@ -93,9 +121,10 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
       BUDGET_200_CORE_ITEMS_OUTLET.map((item) => {
         if (item.id === 'b-motor') return { ...item, unitCostBrl: 48 };
         if (item.id === 'b-battery') return { ...item, unitCostBrl: 38 };
-        if (item.id === 'b-axles') return { ...item, unitCostBrl: 18 };
-        if (item.id === 'b-sprockets') return { ...item, unitCostBrl: 24 };
+        if (item.id === 'b-axles') return { ...item, unitCostBrl: 16 };
+        if (item.id === 'b-sprockets') return { ...item, unitCostBrl: 22 };
         if (item.id === 'b-chain') return { ...item, unitCostBrl: 18 };
+        if (item.id === 'b-fasteners') return { ...item, unitCostBrl: 7 };
         return item;
       })
     );
@@ -106,11 +135,11 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
       ...DEFAULT_LOCOMOTIVE_SPECS,
       chassisWeightG: 1420,
       shellWeightG: 480,
-      motorGearboxWeightG: 860, // Parafusadeira 12V + pinhão + corrente
-      batteryWeightG: 240, // Pack 12V da parafusadeira
-      wheelsetBearingsWeightG: 860, // 2 eixos aço + 4 rodas 3D + 2 pinhões 16T
-      ballastWeightG: 3790, // Lastro gratuito de sucata ferrosa/arruelas no chassi
-      totalWeightGrams: 7650,
+      motorGearboxWeightG: 860, // Parafusadeira 12V + pinhão 14T + corrente + fixadores
+      batteryWeightG: 240, // Pack Li-Ion 3S 12V 20A/40A BMS
+      wheelsetBearingsWeightG: 778, // 2 eixos aço 10mm + 4 rodas 3D + 2 pinhões 16T + RC
+      ballastWeightG: 3870, // Lastro gratuito de sucata ferrosa/arruelas no chassi
+      totalWeightGrams: budgetAudit.totalEstimatedMassG,
       wheelFrictionCoeff: 0.68, // Câmara de ar de bicicleta sobre trilho
     };
 
@@ -136,23 +165,35 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
     });
   };
 
+  const getCategoryTag = (category: BudgetLocomotiveItem['category']) => {
+    if (category === 'free_3d_print') {
+      return { text: 'IMPRESSÃO 3D GRATUITA', color: 'text-cyan-400' };
+    }
+    if (category === 'zero_cost_scrap') {
+      return { text: 'OFICINA / CUSTO ZERO', color: 'text-emerald-400' };
+    }
+    return { text: 'COMPRA NO TETO', color: 'text-amber-400' };
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Budget Summary KPIs */}
       <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-800 pb-5">
-          <div className="space-y-1.5 max-w-3xl">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5 border-b border-slate-800 pb-5">
+          <div className="space-y-1.5 flex-1 min-w-0">
             <div className="flex items-center gap-2 text-xs text-amber-400 font-medium">
               <Wallet className="w-4 h-4" />
-              <span>Orçamento Teto R$ 200,00 · Parafusadeira 12V + Corrente de Bicicleta 4x4 · Impressão 3D Gratuita</span>
+              <span>
+                Especificação Completa ≤ R$ 200 · RS-550 1:36 + Li-Ion 3S 20A + Corrente 4x4 · Impressão 3D Gratuita
+              </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight text-balance">
-              Configuração Econômica ≤ R$ 200: Parafusadeira 12V + Corrente &amp; Pinhões de Bicicleta
+              Configuração Competitiva ≤ R$ 200: Motor, Bateria e Kit Completo 100% no Regulamento
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Estratégia de engenharia de baixo custo aproveitando <strong>motor + caixa planetária + bateria de parafusadeira 12V</strong> acoplados a{' '}
-              <strong>rodas dentadas e corrente de bicicleta (passo 12,7 mm)</strong> em tração integral <strong>4x4</strong> sobre eixos de aço e{' '}
-              <strong>4 rodas impressas em 3D (R$ 0,00)</strong>. O sistema de <strong>controle remoto</strong> é orçado separadamente fora do teto de R$ 200.
+              Combinação fechada para pontuar alto nas 4 provas sem estourar o orçamento: <strong>Motor RS-550 c/ Planetária Metálica 1:36</strong>,{' '}
+              <strong>Pack Li-Ion 12V Alta Descarga (20A contínuos / BMS 40A)</strong>, 2 eixos Ø10 mm, 3 pinhões (14T/16T) e corrente de bike,
+              kit de fixação antissoltas + chave geral (Regras 3.g/3.h) e <strong>4 rodas + chassi 3D gratuitos (R$ 0,00)</strong>. Controle remoto fora do teto.
             </p>
           </div>
 
@@ -176,7 +217,7 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
             <span className="text-[11px] text-slate-400 font-mono tabular-nums">
               {isBudget200Active
                 ? `Ativo nas 4 Provas · Massa: ${specs.totalWeightGrams} g`
-                : 'Envia motor de parafusadeira 12V + roda Ø84mm para o simulador'}
+                : `Envia RS-550 1:36 + Bateria 3S 20A + Roda Ø${wheelDiameterMm}mm para o simulador`}
             </span>
           </div>
         </div>
@@ -193,7 +234,7 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
             <div className="text-xs text-slate-300 flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5">
                 <Wallet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                Gasto Núcleo Mecânico
+                Gasto Núcleo Completo
               </span>
               <span
                 className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
@@ -219,7 +260,7 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
             </div>
             <p className="text-[11px] text-slate-400 mt-1">
               {budgetAudit.withinBudgetCap
-                ? `Folga de R$ ${budgetAudit.remainingMarginBrl.toFixed(2)} abaixo do teto para parafusos/solda`
+                ? `Folga de R$ ${budgetAudit.remainingMarginBrl.toFixed(2)} abaixo do teto (já inclui parafusos e chave geral)`
                 : `Excedeu o limite em R$ ${Math.abs(budgetAudit.remainingMarginBrl).toFixed(2)}`}
             </p>
           </div>
@@ -249,14 +290,14 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
             </div>
             <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2">
               <span className="text-2xl font-mono font-bold text-amber-400 tabular-nums whitespace-nowrap">
-                {chainPhysics.motorTractiveForceN} N
+                {chainPhysics.adhesionLimitN} N
               </span>
               <span className="text-xs text-slate-400 font-mono whitespace-nowrap">
                 ({chainPhysics.wheelLinearSpeedMs} m/s)
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-1">
-              Vão livre pinhão-trilho: {chainPhysics.railClearanceMm} mm ({chainPhysics.clearanceOk ? 'Seguro' : 'Risco'})
+              Força motor {chainPhysics.motorTractiveForceN} N · Vão trilho {chainPhysics.railClearanceMm} mm ({chainPhysics.clearanceOk ? 'Seguro' : 'Risco'})
             </p>
           </div>
 
@@ -279,8 +320,166 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-1">
-              Orçado separado do limite de R$ 200 (motor/eixos/corrente/rodas)
+              Orçado separado do limite de R$ 200 (motor/bateria/eixos/corrente/kit 3.g)
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Chosen Motor & Battery Technical Selection */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 space-y-3">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+              <h3 className="text-sm font-bold text-white">
+                Motor Escolhido: DC RS-550 c/ Planetária Metálica 1:36
+              </h3>
+            </div>
+            <span className="font-mono text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+              R$ 65,00
+            </span>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Retirado de parafusadeira 12V de 2 velocidades em <strong>1ª marcha (redução interna 1:36)</strong>. Diferente de motores DC simples ou redutores de plástico, as engrenagens planetárias sinterizadas aguentam <strong>14,5 N.m de pico (355 N nas rodas)</strong> sem desgastar dentes no Cabo de Guerra e mantendo <strong>1,12 m/s</strong> na prova de Aceleração com pinhão 14T → 16T.
+          </p>
+          <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] font-mono tabular-nums">
+            <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <div className="text-slate-400">Saída 1ª Marcha</div>
+              <div className="text-amber-300 font-bold mt-0.5">290 RPM</div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <div className="text-slate-400">Torque Nom/Stall</div>
+              <div className="text-emerald-400 font-bold mt-0.5">4,6 / 14,5 N.m</div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <div className="text-slate-400">Corrente Pico</div>
+              <div className="text-cyan-400 font-bold mt-0.5">35 A (12 V)</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 space-y-3">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <BatteryCharging className="w-4 h-4 text-emerald-400 shrink-0" />
+              <h3 className="text-sm font-bold text-white">
+                Bateria Escolhida: Pack Li-Ion 3S 12V Alta Descarga (20A / BMS 40A)
+              </h3>
+            </div>
+            <span className="font-mono text-xs font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+              R$ 52,00
+            </span>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Células <strong>18650 de alta descarga (2.500 mAh, 20A contínuos)</strong> com placa <strong>BMS 40A</strong> embutida no chassi. Evita o principal defeito das baterias genéricas de 1,5Ah: <strong>queda brusca de tensão e corte do BMS</strong> quando o motor puxa 25–35A subindo a rampa de 20° ou travado no Cabo de Guerra, garantindo autonomia embarcada (Regra 3.h).
+          </p>
+          <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] font-mono tabular-nums">
+            <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <div className="text-slate-400">Tensão Pack 3S</div>
+              <div className="text-emerald-400 font-bold mt-0.5">11,1 – 12,6 V</div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <div className="text-slate-400">Descarga / BMS</div>
+              <div className="text-amber-300 font-bold mt-0.5">20 A / 40 A</div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <div className="text-slate-400">Massa Pack</div>
+              <div className="text-cyan-400 font-bold mt-0.5">240 g (Interna)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Expected Performance Across All 4 Official Trials + Regulation Compliance */}
+      <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-2.5">
+            <Trophy className="w-5 h-5 text-amber-400" />
+            <div>
+              <h3 className="text-base font-bold text-white">
+                Desempenho Previsto nas 4 Provas &amp; Conformidade com o Regulamento
+              </h3>
+              <p className="text-xs text-slate-400">
+                Atualizado em tempo real pelos pinhões, diâmetro das rodas 3D e marcha selecionada abaixo
+              </p>
+            </div>
+          </div>
+          <span
+            className={`text-xs font-mono font-bold px-3 py-1 rounded-full border ${
+              fourTrialsEvaluation.allTrialsPassed && fourTrialsEvaluation.totalWeightOk
+                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+                : 'bg-amber-500/15 text-amber-300 border-amber-500/40'
+            }`}
+          >
+            {fourTrialsEvaluation.allTrialsPassed && fourTrialsEvaluation.totalWeightOk
+              ? '4/4 PROVAS APROVADAS + REGULAMENTO OK'
+              : 'AJUSTE MARCHA/PINHÃO PARA MÁXIMO DESEMPENHO'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {fourTrialsEvaluation.trials.map((trial) => (
+            <div
+              key={trial.id}
+              className={`p-4 rounded-xl border flex flex-col justify-between space-y-2.5 ${
+                trial.passed
+                  ? 'bg-slate-950/80 border-emerald-500/30'
+                  : 'bg-red-950/20 border-red-500/40'
+              }`}
+            >
+              <div className="space-y-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-xs font-bold text-white leading-snug">{trial.title}</span>
+                  <span
+                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                      trial.passed
+                        ? 'bg-emerald-500/20 text-emerald-300'
+                        : 'bg-red-500/20 text-red-300'
+                    }`}
+                  >
+                    {trial.passed ? 'OK' : 'AJUSTE'}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-400">{trial.metricLabel}</div>
+                <div className="text-sm font-mono font-bold text-cyan-300 tabular-nums">
+                  {trial.metricValue}
+                </div>
+                <div className="text-[11px] font-mono text-amber-300">{trial.marginLabel}</div>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed border-t border-slate-800/80 pt-2">
+                {trial.summary}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Regulation 3.a - 3.h Quick Audit Bar */}
+        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
+            <ClipboardCheck className="w-4 h-4 text-emerald-400" />
+            <span>Conferência do Edital Cavalos de Ferro 2026 (Itens 3.a a 3.h):</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+            {fourTrialsEvaluation.regulationSummary.map((item) => (
+              <div
+                key={item.rule}
+                className={`p-2.5 rounded-lg border ${
+                  item.compliant
+                    ? 'bg-slate-900/90 border-emerald-500/30'
+                    : 'bg-red-950/30 border-red-500/40'
+                }`}
+              >
+                <div className="flex items-center justify-between font-mono text-[10px] text-slate-400">
+                  <span>Regra {item.rule}</span>
+                  <span className={item.compliant ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>
+                    {item.compliant ? 'OK' : 'EXCEDE'}
+                  </span>
+                </div>
+                <div className="font-semibold text-white text-[11px] mt-0.5 truncate">{item.label}</div>
+                <div className="font-mono text-[11px] text-cyan-300 mt-0.5">{item.value}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -304,7 +503,7 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
                 type="button"
                 onClick={() => applyBudgetPreset('outlet')}
                 className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
-                title="Restaurar orçamento padrão (R$ 192)"
+                title="Restaurar orçamento padrão (R$ 196)"
                 aria-label="Restaurar orçamento padrão"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -501,19 +700,19 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
               <rect x="270" y="42" width="128" height="44" rx="5" fill="#1e293b" stroke="#f59e0b" strokeWidth="1.6" />
               <rect x="398" y="48" width="44" height="32" rx="3" fill="#475569" stroke="#fde047" strokeWidth="1.2" />
               <text x="334" y="61" textAnchor="middle" fill="#fbbf24" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
-                PARAFUSADEIRA 12V
+                RS-550 12V (1:36)
               </text>
               <text x="334" y="75" textAnchor="middle" fill="#cbd5e1" fontSize="8" fontFamily="monospace">
-                RS-550 + Planetária
+                Planetária Metálica
               </text>
 
-              {/* Battery 12V Li-Ion from Screwdriver (Left Inside Chassis) */}
+              {/* Battery 12V Li-Ion 20A/40A BMS (Left Inside Chassis) */}
               <rect x="128" y="54" width="102" height="40" rx="4" fill="#064e3b" stroke="#10b981" strokeWidth="1.5" />
               <text x="179" y="72" textAnchor="middle" fill="#6ee7b7" fontSize="9" fontFamily="monospace" fontWeight="bold">
-                BATERIA 12V
+                BATERIA 3S 12V
               </text>
               <text x="179" y="84" textAnchor="middle" fill="#a7f3d0" fontSize="8" fontFamily="monospace">
-                Li-Ion 3S (Kit)
+                20A / BMS 40A
               </text>
 
               {/* Remote Control System Box (OUTSIDE R$200 CAP, Right Side) */}
@@ -586,10 +785,7 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-xs text-slate-300 leading-relaxed">
-            <strong className="text-white">Dica Prática de Montagem (Zero Torno Mecânico):</strong> Use uma{' '}
-            <strong>porca sextavada longa / acoplador hexagonal impresso em 3D (ou bucha de aço)</strong> no mandril ou eixo sextavado{' '}
-            <strong>1/4&quot;</strong> da parafusadeira para travar o pinhão {motorSprocketTeeth}T sem escorregamento. Nos dois eixos de aço{' '}
-            <strong>Ø 10 mm</strong>, fixe as rodas 3D e os pinhões {axleSprocketTeeth}T prensados entre duas porcas travantes M10 + arruelas dentadas.
+            <strong className="text-white">Dica Prática de Inspeção &amp; Montagem (Regras 3.g e 3.h):</strong> Trave o pinhão {motorSprocketTeeth}T com acoplador hexagonal 1/4&quot; no eixo da planetária e prense cada roda 3D + pinhão {axleSprocketTeeth}T nos eixos de aço <strong>Ø 10 mm</strong> entre duas <strong>porcas travantes Parlock M10</strong>. Instale a <strong>chave geral de 20A</strong> no topo da carenagem e garanta zero peças soltas (tampa do lastro parafusada com M4).
           </div>
         </div>
       </section>
@@ -601,10 +797,10 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
             <div>
               <h3 className="text-base font-bold text-white">
-                Orçamento Núcleo Mecânico &amp; Energia (Teto ≤ R$ 200,00)
+                Lista Completa de Materiais — Núcleo &amp; Energia (Teto ≤ R$ 200,00)
               </h3>
               <p className="text-xs text-slate-400">
-                Você pode ajustar os valores abaixo conforme a cotação na sua cidade para validar o teto
+                Inclui motor, bateria 20A, eixos, pinhões, corrente, fixadores de inspeção e peças 3D gratuitas
               </p>
             </div>
             <div className="flex items-center gap-1.5 text-xs">
@@ -613,14 +809,14 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
                 onClick={() => applyBudgetPreset('outlet')}
                 className="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-200 font-medium cursor-pointer"
               >
-                Cenário Loja/Outlet (R$ 192)
+                Cenário Loja/Outlet (R$ 196)
               </button>
               <button
                 type="button"
                 onClick={() => applyBudgetPreset('scrap')}
                 className="px-2.5 py-1.5 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/50 border border-emerald-500/40 text-emerald-300 font-medium cursor-pointer"
               >
-                Cenário Oficina/Usados (R$ 146)
+                Cenário Oficina/Usados (R$ 149)
               </button>
             </div>
           </div>
@@ -630,52 +826,52 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 font-mono uppercase text-[11px]">
                   <th className="py-2.5 pr-3">Componente</th>
-                  <th className="py-2.5 px-3">Origem / Impressão 3D</th>
+                  <th className="py-2.5 px-3">Origem / Regra</th>
                   <th className="py-2.5 pl-3 text-right">Valor (R$)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/70">
-                {coreItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-950/50">
-                    <td className="py-3 pr-3">
-                      <div className="font-semibold text-white">{item.name}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">{item.spec}</div>
-                    </td>
-                    <td className="py-3 px-3 text-slate-300">
-                      <span
-                        className={`inline-block text-[10px] font-mono font-bold mb-0.5 ${
-                          item.category === 'free_3d_print' ? 'text-cyan-400' : 'text-amber-400'
-                        }`}
-                      >
-                        {item.category === 'free_3d_print' ? 'IMPRESSÃO 3D GRATUITA' : 'COMPRA NO TETO'}
-                      </span>
-                      <div className="text-[11px] text-slate-400">{item.sourceTip}</div>
-                    </td>
-                    <td className="py-3 pl-3 text-right font-mono tabular-nums whitespace-nowrap">
-                      {item.category === 'free_3d_print' ? (
-                        <span className="text-cyan-400 font-bold">R$ 0,00</span>
-                      ) : (
-                        <div className="inline-flex items-center gap-1 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1">
-                          <span className="text-slate-400">R$</span>
-                          <input
-                            type="number"
-                            min={0}
-                            max={500}
-                            aria-label={`Preço de ${item.name}`}
-                            value={item.unitCostBrl}
-                            onChange={(e) => handlePriceChange(item.id, Number(e.target.value))}
-                            className="w-12 bg-transparent text-right text-amber-300 font-bold focus:outline-none"
-                          />
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {coreItems.map((item) => {
+                  const tag = getCategoryTag(item.category);
+                  const isZeroCost = item.category === 'free_3d_print' || item.category === 'zero_cost_scrap';
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-950/50">
+                      <td className="py-3 pr-3">
+                        <div className="font-semibold text-white">{item.name}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">{item.spec}</div>
+                      </td>
+                      <td className="py-3 px-3 text-slate-300">
+                        <span className={`inline-block text-[10px] font-mono font-bold mb-0.5 ${tag.color}`}>
+                          {tag.text}
+                        </span>
+                        <div className="text-[11px] text-slate-400">{item.sourceTip}</div>
+                      </td>
+                      <td className="py-3 pl-3 text-right font-mono tabular-nums whitespace-nowrap">
+                        {isZeroCost ? (
+                          <span className={`${tag.color} font-bold`}>R$ 0,00</span>
+                        ) : (
+                          <div className="inline-flex items-center gap-1 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1">
+                            <span className="text-slate-400">R$</span>
+                            <input
+                              type="number"
+                              min={0}
+                              max={500}
+                              aria-label={`Preço de ${item.name}`}
+                              value={item.unitCostBrl}
+                              onChange={(e) => handlePriceChange(item.id, Number(e.target.value))}
+                              className="w-12 bg-transparent text-right text-amber-300 font-bold focus:outline-none"
+                            />
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-700 bg-slate-950/80 font-mono">
                   <td colSpan={2} className="py-3 px-3 font-bold text-slate-200">
-                    Total Núcleo (Motor + Bateria + Eixos + Rodas Dentadas + Corrente + 4 Rodas 3D)
+                    Total Núcleo (Motor + Bateria 20A + Eixos + Pinhões + Corrente + Kit 3.g/3.h + 4 Rodas 3D)
                   </td>
                   <td
                     className={`py-3 px-3 text-right font-bold text-sm tabular-nums whitespace-nowrap ${
@@ -756,6 +952,10 @@ export const BudgetLocomotiveBuilder: React.FC<Props> = ({
             <div className="flex justify-between text-slate-300">
               <span>Controle Remoto (fora do teto):</span>
               <span className="text-purple-300 font-bold">+ R$ {budgetAudit.remoteControlTotalBrl.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-slate-300">
+              <span>Massa Total Pronta (Regra 3.c ≤ 8000 g):</span>
+              <span className="text-cyan-300 font-bold">{budgetAudit.totalEstimatedMassG.toLocaleString('pt-BR')} g</span>
             </div>
             <div className="flex justify-between border-t border-slate-800 pt-1.5 text-white font-bold">
               <span>Total Geral Completo c/ RC:</span>

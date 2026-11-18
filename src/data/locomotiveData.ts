@@ -173,15 +173,15 @@ export const MOTOR_OPTIONS: MotorOption[] = [
     scoreAcceleration: 9.0,
     scoreTugOfWar: 9.5,
     pros: [
-      'Custo imbatível (<= R$ 200 com bateria, eixos, pinhões e corrente de bicicleta)',
+      'Custo imbatível (<= R$ 200 com bateria 20A, eixos, pinhões, corrente e kit fixação 3.g/3.h)',
       'Já vem com caixa planetária metálica de 2 velocidades (~1:36 na 1ª marcha)',
       'Transmissão 4x4 por corrente de bicicleta 1/2" x 1/8" não patina nem rompe em tração pesada'
     ],
     cons: [
       'Exige acoplamento hexagonal ou chavetado firme no eixo de saída para o pinhão 14T',
-      'Bateria original 1.5Ah exige recarga entre baterias de provas intensas'
+      'Pack 3S precisa suportar descarga >= 20A contínuos (BMS 40A) para não cortar no Cabo de Guerra'
     ],
-    verdict: 'MELHOR CUSTO-BENEFÍCIO (<= R$ 200): Aproveita motor RS-550 + redutor planetário metálico e bateria de parafusadeira 12V com transmissão indestrutível por corrente de bicicleta.'
+    verdict: 'ESCOLHA ECONÔMICA DEFINITIVA (<= R$ 200): Motor RS-550 12V c/ planetária 1:36 + Bateria Li-Ion 3S Alta Descarga 20A e corrente 4x4 para vencer as 4 provas cumprindo 100% do regulamento.'
   }
 ];
 
@@ -560,53 +560,62 @@ export const DIY_MOTOR_FABRICATION_STEPS: FabricationStep[] = [
 export const BUDGET_200_CORE_ITEMS_OUTLET = [
   {
     id: 'b-motor',
-    name: 'Motor de Parafusadeira 12V + Caixa Planetária Metálica (1ª Marcha)',
-    spec: 'Motor DC RS-550 + planetária 1:36 (~290 RPM, 4,6 N.m nom / 14,5 N.m pico)',
+    name: 'Motor Escolhido: DC RS-550 c/ Redutor Planetário Metálico 1:36 (1ª Marcha)',
+    spec: 'Conjunto motor + planetária de parafusadeira 12V (290 RPM, 4,6 N.m nom / 14,5 N.m stall)',
     category: 'core_budget' as const,
-    unitCostBrl: 68,
+    unitCostBrl: 65,
     massG: 520,
-    sourceTip: 'Parafusadeira 12V outlet/usada desmontada (aproveitando conjunto motor+caixa)'
+    sourceTip: 'Parafusadeira 12V outlet/desmanche (evita engrenagem plástica no Cabo de Guerra)'
   },
   {
     id: 'b-battery',
-    name: 'Bateria 12V Li-Ion da Própria Parafusadeira (Pack 3S 1.5Ah)',
-    spec: '11,1V–12,6V · células 18650 internas com proteção + terminais de latão',
+    name: 'Bateria Escolhida: Pack Li-Ion 12V Alta Descarga (3S 18650 2500mAh · 20A/40A BMS)',
+    spec: '11,1V–12,6V · 20A contínuos / pico 35A sem corte de BMS na rampa e cabo de guerra (Regra 3.h)',
     category: 'core_budget' as const,
-    unitCostBrl: 47,
+    unitCostBrl: 52,
     massG: 240,
-    sourceTip: 'Incluída no conjunto da parafusadeira 12V ou pack 3S usado testado'
+    sourceTip: 'Pack 3S alta descarga ou bateria original de parafusadeira 12V/18V adaptada com BMS 40A'
   },
   {
     id: 'b-axles',
-    name: '2× Eixos de Aço (Ø 10 mm × 195 mm + Porcas Travantes & Arruelas)',
-    spec: 'Barra de aço carbono 10 mm (cortada em 2 eixos) para bitola exata de 150 mm',
+    name: '2× Eixos de Aço (Ø 10 mm × 195 mm + 8 Porcas Travantes Parlock M10 + Arruelas)',
+    spec: 'Barra roscada/lisa de aço carbono 10 mm para bitola exata 150,0 mm (Regra 3.a) sem folga',
     category: 'core_budget' as const,
-    unitCostBrl: 22,
-    massG: 260,
-    sourceTip: 'Casa de ferragens / material de construção (barra 1 m + 8 porcas M10)'
+    unitCostBrl: 20,
+    massG: 270,
+    sourceTip: 'Casa de ferragens (porcas autofrenantes travam roda + pinhão sem peça solta)'
   },
   {
     id: 'b-sprockets',
-    name: '3× Rodas Dentadas de Bicicleta (1× Pinhão 14T + 2× Pinhões 16T)',
-    spec: 'Passo 1/2" (12,7 mm) em aço temperado: 14T no motor e 16T em cada eixo 4x4',
+    name: '3× Rodas Dentadas de Bicicleta (1× Pinhão 14T motor + 2× Pinhões 16T eixos 4x4)',
+    spec: 'Passo 1/2" (12,7 mm) em aço temperado: redução 1,14:1 garante > 110 N com vão seguro no trilho',
     category: 'core_budget' as const,
-    unitCostBrl: 33,
+    unitCostBrl: 30,
     massG: 340,
-    sourceTip: 'Bicicletaria de bairro (pinhões/catracas simples de aço ~R$ 11 cada)'
+    sourceTip: 'Bicicletaria de bairro (3 pinhões simples de aço ~R$ 10 cada)'
   },
   {
     id: 'b-chain',
-    name: 'Corrente de Bicicleta Grossa (1/2" × 1/8")',
-    spec: '114 elos em aço carbono cortada sob medida em loop 4x4 + emenda rápida',
+    name: 'Corrente de Bicicleta Grossa (1/2" × 1/8") + Emenda Rápida',
+    spec: 'Loop único 4x4 sincronizando os dois eixos — não patina e não estoura sob 355 N',
     category: 'core_budget' as const,
-    unitCostBrl: 22,
+    unitCostBrl: 20,
     massG: 290,
-    sourceTip: 'Bicicletaria local (corrente comum barra forte / BMX)'
+    sourceTip: 'Bicicletaria local (corrente comum BMX / barra forte cortada sob medida)'
+  },
+  {
+    id: 'b-fasteners',
+    name: 'Kit Inspeção Regras 3.g & 3.h: Parafusos M4/M5 Travantes, Chave Geral 20A & Cabos 14 AWG',
+    spec: 'Chave alavanca 20A no painel + terminal XT60/barra + fixação anti-peça solta em todo o chassi',
+    category: 'core_budget' as const,
+    unitCostBrl: 9,
+    massG: 90,
+    sourceTip: 'Loja de eletrônica/parafusos (cumpre 100% da vistoria técnica do edital)'
   },
   {
     id: 'b-wheels-3d',
-    name: '4× Rodas Ferroviárias Ø 84 mm + Tira de Câmara de Ar de Bike (Atrito)',
-    spec: 'Impressas 100% sólidas com cubo hexagonal M10 + anel de borracha reutilizada',
+    name: '4× Rodas Ferroviárias Ø 84 mm (Bitola 150 mm) + Banda Câmara de Bike (μ=0,68)',
+    spec: 'Cubo hexagonal M10 reforçado (100% infill) + anel de borracha reutilizada para 51 N de aderência',
     category: 'free_3d_print' as const,
     unitCostBrl: 0,
     massG: 480,
@@ -614,12 +623,21 @@ export const BUDGET_200_CORE_ITEMS_OUTLET = [
   },
   {
     id: 'b-chassis-3d',
-    name: 'Chassi Modular 150 mm, Berço da Parafusadeira, Esticador & Engate 107,5 mm',
-    spec: 'Estrutura em PETG/PLA+ com alojamento fechado de lastro (sucata ferrosa limpa)',
+    name: 'Chassi 335×205×245 mm + Berço Motor + Esticador + Engate 107,5 mm (Regras 3.b/d/e/f)',
+    spec: 'Estrutura em PETG com compartimento travado para lastro e chave geral (Regra 3.g)',
     category: 'free_3d_print' as const,
     unitCostBrl: 0,
     massG: 1420,
-    sourceTip: 'Serviço de Impressão 3D Gratuito (lastro com sucata de ferro/arruelas = R$ 0)'
+    sourceTip: 'Serviço de Impressão 3D Gratuito (bitola 150,0 mm e engate 107,5 mm)'
+  },
+  {
+    id: 'b-ballast',
+    name: 'Lastro de Aderência 4x4 (Sucata Ferrosa Limpa / Arruelas Encapsuladas)',
+    spec: '3.870 g travados no fundo do chassi → massa final ~7.650 g (< 8.000 g Regra 3.c)',
+    category: 'zero_cost_scrap' as const,
+    unitCostBrl: 0,
+    massG: 3870,
+    sourceTip: 'Sucata de ferro/parafusos de oficina a custo zero (garante 51,0 N no trilho)'
   }
 ];
 

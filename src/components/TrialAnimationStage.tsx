@@ -298,9 +298,9 @@ export const TrialAnimationStage: React.FC<Props> = ({
   const rampLocoX = rampStartX + rampLocoDistPx * Math.cos(rampRad);
   const rampLocoY = rampStartY - rampLocoDistPx * Math.sin(rampRad);
 
-  // Helpers coordinates (0..2.0 m)
-  const helpersLocoX = 125 + frame.progress * 388;
-  const helpersWagonX = helpersLocoX + 132;
+  // Helpers coordinates (0..2.0 m): Locomotive leads in front (right), Cargo Wagon pulled behind (left)
+  const helpersLocoX = 245 + frame.progress * 395;
+  const helpersWagonX = helpersLocoX - 134;
   const ballastBlocksCount = Math.max(0, Math.min(8, Math.round((helpersLoadKg / 25) * 8)));
 
   // Acceleration coordinates (0..2500 mm)
@@ -393,8 +393,8 @@ export const TrialAnimationStage: React.FC<Props> = ({
             <g>
               {/* Rail bed & sleepers */}
               <rect x="40" y="196" width="700" height="6" rx="2" fill="#475569" />
-              {[0, 0.5, 1.0, 1.5, 2.0].map((mark, i) => {
-                const xPos = Math.min(705, 125 + i * 145);
+              {[0, 0.5, 1.0, 1.5, 2.0].map((mark) => {
+                const xPos = Math.round(295 + (mark / 2.0) * 400);
                 return (
                   <g key={mark}>
                     <line x1={xPos} y1="186" x2={xPos} y2="210" stroke="#334155" strokeWidth="1.5" />
@@ -405,36 +405,25 @@ export const TrialAnimationStage: React.FC<Props> = ({
                 );
               })}
 
-              {/* Finish Line Gate at 2.0m mark for Wagon front */}
-              <line x1="705" y1="68" x2="705" y2="196" stroke="#10b981" strokeWidth="2" strokeDasharray="5 3" />
-              <rect x="652" y="48" width="106" height="18" rx="4" fill="#064e3b" stroke="#10b981" strokeWidth="1" />
-              <text x="705" y="60" textAnchor="middle" fill="#6ee7b7" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
+              {/* Finish Line Gate at 2.0m mark for Leading Locomotive Nose */}
+              <line x1="695" y1="68" x2="695" y2="196" stroke="#10b981" strokeWidth="2" strokeDasharray="5 3" />
+              <rect x="642" y="48" width="106" height="18" rx="4" fill="#064e3b" stroke="#10b981" strokeWidth="1" />
+              <text x="695" y="60" textAnchor="middle" fill="#6ee7b7" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
                 META 2,0 m
               </text>
 
-              {/* Rigid Coupler Bar (107.5mm hitch) */}
+              {/* Rigid Rear Coupler Bar (Wagon behind -> Locomotive rear 107.5mm hitch) */}
               <line
-                x1={helpersLocoX + 52}
+                x1={helpersWagonX + 58}
                 y1="168"
-                x2={helpersWagonX - 58}
+                x2={helpersLocoX - 52}
                 y2="168"
                 stroke="#f59e0b"
                 strokeWidth="4"
               />
-              <circle cx={helpersLocoX + 54} cy="168" r="3.5" fill="#fde047" />
+              <circle cx={helpersLocoX - 54} cy="168" r="3.5" fill="#fde047" />
 
-              {/* Locomotive */}
-              <AnimatedLocoGlyph
-                x={helpersLocoX}
-                y={196}
-                wheelAngleDeg={frame.wheelAngleDeg}
-                isSlipping={frame.isSlipping}
-                accentColor={helpersPassed ? '#10b981' : '#ef4444'}
-                label="UFSC 4x4"
-                subLabel={`${locoMassKg.toFixed(2)} kg`}
-              />
-
-              {/* Heavy Ballast Freight Wagon */}
+              {/* Heavy Ballast Freight Wagon (Trailing Behind Locomotive) */}
               <g transform={`translate(${helpersWagonX}, 196)`}>
                 <rect x="-58" y="-36" width="116" height="22" rx="3" fill="#1e293b" stroke="#22d3ee" strokeWidth="1.5" />
                 {/* Steel ballast ingots */}
@@ -466,22 +455,33 @@ export const TrialAnimationStage: React.FC<Props> = ({
                 </text>
               </g>
 
-              {/* Force Vectors */}
+              {/* Leading Locomotive (Pulling Front) */}
+              <AnimatedLocoGlyph
+                x={helpersLocoX}
+                y={196}
+                wheelAngleDeg={frame.wheelAngleDeg}
+                isSlipping={frame.isSlipping}
+                accentColor={helpersPassed ? '#10b981' : '#ef4444'}
+                label="UFSC 4x4"
+                subLabel={`${locoMassKg.toFixed(2)} kg`}
+              />
+
+              {/* Force Vectors: Green Pull over Leading Locomotive, Red Drag over Trailing Wagon */}
               <line
-                x1={helpersLocoX - 18}
+                x1={helpersLocoX - 24}
                 y1="108"
-                x2={helpersLocoX + 44}
+                x2={helpersLocoX + 38}
                 y2="108"
                 stroke="#10b981"
                 strokeWidth="2.5"
                 markerEnd="url(#arrowGreen)"
               />
-              <text x={helpersLocoX + 12} y="101" textAnchor="middle" fill="#34d399" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
+              <text x={helpersLocoX + 8} y="101" textAnchor="middle" fill="#34d399" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
                 F_atrito: {maxAdhesionForceN.toFixed(1)} N
               </text>
 
               <line
-                x1={helpersWagonX + 18}
+                x1={helpersWagonX + 24}
                 y1="108"
                 x2={helpersWagonX - 38}
                 y2="108"
@@ -489,7 +489,7 @@ export const TrialAnimationStage: React.FC<Props> = ({
                 strokeWidth="2.2"
                 markerEnd="url(#arrowRed)"
               />
-              <text x={helpersWagonX - 10} y="101" textAnchor="middle" fill="#fca5a5" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
+              <text x={helpersWagonX - 8} y="101" textAnchor="middle" fill="#fca5a5" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
                 Arraste: {helpersPeakForceN.toFixed(1)} N
               </text>
             </g>
